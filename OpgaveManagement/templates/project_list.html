@@ -1,0 +1,261 @@
+{%  extends "index.html" %}
+{% block page_css %}
+{% endblock %}
+{% block page_title %}
+    工作日报
+{% endblock %}
+
+{% block container %}
+{% load staticfiles %}
+    <div class="header">
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">创建人
+        <span class="caret"></span>
+        </button>
+    <ul class="dropdown-menu" role="menu">
+        {% for create_user in users %}
+            <li>
+                <a href="javascript:record_user({{ create_user.id }})" id="user_check">{{ create_user.user.username }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    </div>
+
+    <div class="btn-group col-lg-offset-1">
+        <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">
+            排序
+        <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+         <li><a href="javascript:record_reverse(1)" id="not_reverse">降序</a></li>
+         <li><a href="javascript:record_reverse(0)" id="reverse">升序</a></li>
+        </ul>
+    </div>
+
+    <div class="btn-group">
+      <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">项目状态
+        <span class="caret"></span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+          <li><a href="javascript:record_project_status(0)" id="status_all">全部</a></li>
+         <li><a href="javascript:record_project_status(1)" id="status_">进行中</a></li>
+         <li><a href="javascript:record_project_status(2)" id="status_finish">已完结</a></li>
+        </ul>
+    </div>
+
+    <div class="btn-group col-lg-offset-1 col-sm-offset-1 col-md-offset-1">
+      <span class="btn btn-sm" style="">创建日期</span>
+      <input type="text" class="date-picker input-sm" data-date-format="yyyy-mm-dd" placeholder="开始日期" id="project_start">
+    </div>
+
+    <div class="btn-group">
+      <i class="fa fa-exchange"></i>
+    </div>
+
+    <div class="btn-group">
+      <input type="text" class="date-picker input-sm" data-date-format="yyyy-mm-dd" placeholder="结束日期" id="project_end">
+    </div>
+
+    <div class="btn-group col-lg-offset-1 col-sm-offset-1 col-md-offset-1">
+        <a type="button" class="btn btn-default btn-sm" id="search" href="">
+            <i class="ace-icon fa fa-search icon-on-right bigger-110"></i>
+        </a>
+    </div>
+
+    {% if request.session.user_permissions <= 2 %}
+    <div class="btn-group" style="float: right">
+        <div class="btn btn-default btn-sm">
+            <a href="{% url 'project_create'%}" style="color: white; text-decoration: none">
+            <i class="ace-icon fa fa-search-plus bigger-130"></i>
+            新建项目
+        </a>
+        </div>
+    </div>
+    {% endif %}
+
+
+    </div>
+    <div class="media-body">
+        <div class="col-xs-12">
+            <div class="table-header">
+                {{ result }}
+            </div>
+            <div>
+                <table id="table_id" class="table table-striped table-bordered table-hover">
+												<thead>
+                                                       <th>项目名称</th>
+                                                       <th>项目状态</th>
+                                                       <th>创建人</th>
+                                                       <th>创建时间</th>
+                                                       <th>编辑项目</th>
+												</thead>
+												<tbody>
+                                                {% for project in data %}
+													<tr>
+                                                       <td>{{ project.project_title }}</td>
+                                                       {% if project.progect_is_finish == 1 %}<td>进行中</td>{% endif %}
+                                                       {% if project.progect_is_finish == 2 %}<td>已完结</td>{% endif %}
+
+                                                       <td>{{ project.project_creater }}</td>
+                                                        <td>{{ project.progect_createrime}}</td>
+														<td>
+															<div class="hidden-sm hidden-xs action-buttons">
+
+																 <a class="green" href="{% url 'project_edit' project.id %}" title="编辑项目">
+																	<i class="ace-icon fa fa-pencil bigger-130"></i>
+																</a>
+
+                                                                {% if project.project_creater == request.session.user_name%}
+                                                                    <a class="red project_delete" href="{% url 'project_delete' project.id%}" title="删除项目">
+																	<i class="ace-icon fa fa-trash-o bigger-130"></i>
+                                                                    </a>
+                                                                {%  else %}
+                                                                    <a class="red none_delete" href="{% url 'project_delete' project.id%}" title="删除项目">
+																	<i class="ace-icon fa fa-trash-o bigger-130"></i>
+                                                                    </a>
+                                                                {% endif %}
+                                                            </div>
+
+															<div class="hidden-md hidden-lg">
+																<div class="inline position-relative">
+																	<button class="btn btn-minier btn-yellow dropdown-toggle" data-toggle="dropdown" data-position="auto">
+																		<i class="ace-icon fa fa-caret-down icon-only bigger-120"></i>
+																	</button>
+
+																	<ul class="dropdown-menu dropdown-only-icon dropdown-yellow dropdown-menu-right dropdown-caret dropdown-close">
+																		<li>
+																			<a href="#" class="tooltip-info" data-rel="tooltip" title="View">
+																				<span class="blue">
+																					<i class="ace-icon fa fa-search-plus bigger-120"></i>
+																				</span>
+																			</a>
+																		</li>
+
+																		<li>
+																			<a href="#" class="tooltip-success" data-rel="tooltip" title="Edit">
+																				<span class="green">
+																					<i class="ace-icon fa fa-pencil-square-o bigger-120"></i>
+																				</span>
+																			</a>
+																		</li>
+
+																		<li>
+																			<a href="#" class="tooltip-error" data-rel="tooltip" title="Delete">
+																				<span class="red">
+																					<i class="ace-icon fa fa-trash-o bigger-120"></i>
+																				</span>
+																			</a>
+																		</li>
+																	</ul>
+																</div>
+															</div>
+														</td>
+													</tr>
+                                                    {% endfor %}
+												</tbody>
+											</table>
+            </div>
+        </div>
+   {% include 'pagination.html' %}
+   </div>
+
+{% endblock %}
+
+{% block page_javascript %}
+ <script type="text/javascript">
+ var user_id = "all";
+ var is_reverse = 0;
+ var project_status = 1;
+
+            jQuery(function($) {
+				//datepicker plugin
+				//link
+				$('.date-picker').datepicker({
+					autoclose: true,
+					todayHighlight: true
+
+				})
+				//show datepicker when clicking on the icon
+				.next().on(ace.click_event, function(){
+					$(this).prev().focus();
+				});
+
+				//or change it into a date range picker
+				$('.input-daterange').datepicker({autoclose:true});
+
+
+				$('#timepicker1').timepicker({
+					minuteStep: 1,
+					showSeconds: true,
+					showMeridian: false
+				}).next().on(ace.click_event, function(){
+					$(this).prev().focus();
+				});
+
+				$('#date-timepicker1').datetimepicker().next().on(ace.click_event, function(){
+					$(this).prev().focus();
+				});
+
+				var $end_input = $("#project_end");
+                $end_input.click(function(){
+                    $(this).val("").css({color:"#666666", fontSize:"14px"})
+                });
+				$("#search").click(function () {
+                   var start_time = $("#project_start").val();
+                   var end_time = $end_input.val();
+                   console.log(project_status);
+                   if  (start_time <= end_time){
+                       var href_url = '{% url 'project_list'%}' + '?'+"&reverse="+is_reverse+"&progect_status="+ project_status;
+
+                       if (user_id !="all"){
+                           href_url += "&user_id="+user_id;
+                       }
+                       if (start_time){
+{#                          para.start_time = start_time;#}
+                          href_url += "&project_start="+start_time;
+                       }
+
+                       if (end_time){
+{#                           para.end_time = end_time;#}
+                           href_url += "&project_end="+end_time;
+                       }
+                       console.log(href_url);
+                       $(this).prop({href:href_url});
+                       return true;
+
+                   } else {
+                       $end_input.val("结束必须大于开始").css({color:"red", fontSize:"12px"});
+                       return false;
+                   }
+                });
+
+
+
+                $(".project_delete").click(function () {
+                    return confirm("确定删除这个项目?");
+                });
+
+                $(".none_delete").click(function(){
+                    alert("您没有权限删除这个项目");
+                    return false;
+                })
+});
+
+            function record_user(user) {
+                // 记录创建人的名字
+                user_id = user;
+            }
+
+            function record_reverse(reverse){
+                // 记录排序的方式
+                is_reverse = reverse;
+            }
+
+            function record_project_status (status) {
+                // 记录项目的状态
+                project_status = status;
+            }
+
+		</script>
+{% endblock %}

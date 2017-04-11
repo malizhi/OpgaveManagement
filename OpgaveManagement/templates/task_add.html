@@ -1,0 +1,215 @@
+{% extends "index.html" %}
+{% load crispy_forms_tags %}
+{% block page_title %}
+    任务处理
+{% endblock %}
+{% block container %}
+    <div class="row" id="main_view">
+    <form style="height: 100%" action="{% url "task_add" %}" method="post" id="submit">
+            {% csrf_token %}
+
+            <ul style="padding: 0; margin: 0; border: 0;list-style: none; width: 100%; height:100%">
+            <li style="float: left;border-right: 1px solid #ddd; width: 25%; height: 100%;">
+                <ul style="padding: 0; margin: 0 10px 0 0; border: 0;list-style: none;height: 100%">
+                    <li style="height:20%">
+                        <div style="width: 100%;height: 30px">
+                            任务的名称
+                        </div>
+                        <label style="color: red; margin:0;"></label>
+                        <input type="text" name="task_title" placeholder="请输入任务的名称" style="width: 100%;height: 50%;" class="text">
+                    </li>
+                    <li style="height: 40%;">
+                        <div style="width: 100%;height: 30px; line-height: 30px;">
+                                联系人
+                        </div>
+                        <label style="color: red; margin:0;"></label>
+                        <textarea type="text" name="task_contacts" placeholder="请输入联系人" style="width:100%; height: 60%;" class="text"></textarea>
+                    </li>
+                    <li style="position: relative; height:40%">
+                        <div style="width: 100%;height: 16px; line-height: 16px;position: absolute; top: 0;">
+                                实施人员
+                        </div>
+                        <label style="color: red; margin:0;position: absolute;top: 16px; line-height: 13px; font-size: 14px;height: 14px;" id="member_error"></label>
+                         <div style="width: 100%; position: absolute; top: 30px; bottom: 0;overflow: auto;">
+                            {% for member in members %}
+                            <div>
+                                <input type="checkbox" name="task_member" value="{{ member.id }}">
+                                <label>{{ member.user.username }}</label>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li style="width: 75%;float: right;box-sizing: border-box; border-left: 10px solid white; height: 100%">
+                <div class="btn-group" style="width: 100%;">
+                    <span style="line-height: 34px;">处理过程</span>
+                    <div style="float: right">
+                        <input class='btn btn-primary btn-sm' type="submit" value='提交' style="float: left; width: 50px;margin-right: 10px"/>
+                        <a href="{% url 'task_list' %}" tyle="float: left"><input class='btn btn-default btn-sm' type='button' value='取消' /></a>
+                    </div>
+                </div>
+               <label style="color: red; margin:0; "></label>
+                <textarea type="text" name="process_content" placeholder="请输入处理的过程" style="width: 100%;height: 90%; margin-top: 5px;" class="text"></textarea>
+            </li>
+        </ul>
+    </form>
+</div>
+{% endblock %}
+
+{% block page_javascript %}
+ <script type="text/javascript">
+$(function(){
+    var $daily_title = $("input[name='task_title']");
+    var $daily_profile = $("textarea[name='task_contacts']");
+    var $daily_detail = $("textarea[name='process_content']");
+    var $member_select_box = $("input[type='checkbox']");
+
+    var $main_view = $("#main_view");
+    var $window = $(window);
+
+    $main_view.css({height:$window.height() * 0.7});
+    // 重新计算高度
+        $window.resize(function(){
+            $main_view.css({height:$window.height() * 0.7});
+        });
+
+    $member_select_box.change(function(){
+        if ($(this).prop("checked")){
+           $("#member_error").text("")
+         }
+    });
+    // 需要验证
+    $("form").on("blur", ".text", function(){
+               var $this = $(this);
+               var input_name = $this.prop("name");
+               var $value = trimStr($this.val());
+               var info_dic = check(input_name, $value);
+               $this.prev().text(info_dic.info);
+         });
+
+     $("#submit").submit(function(){
+
+      var select_member = false;
+      var daily_title =  $daily_title.val();
+      var daily_profile = $daily_profile.val();
+      var daily_detail = $daily_detail.val();
+
+      var title_info_dic = check($daily_title.prop("name"), daily_title);
+      var profile_info_dic = check($daily_profile.prop("name"), daily_profile);
+      var detail_info_dic = check($daily_detail.prop("name"), daily_detail);
+
+      $daily_title.prev().text(title_info_dic.info);
+      $daily_profile.prev().text(profile_info_dic.info);
+      $daily_detail.prev().text(detail_info_dic.info);
+
+      $("input[type='checkbox']").each(function(){
+          if ($(this).prop("checked")){
+            select_member = true;
+         }
+      });
+
+      if (!select_member){
+          $("#member_error").text("请选择实施人员")
+      }else{
+        $("#member_error").text("")
+      }
+
+      if((title_info_dic.status_code == 1)
+          && (profile_info_dic.status_code == 1)
+          && (detail_info_dic.status_code == 1)
+          && select_member ){
+          return true;
+      }
+
+      return false;
+
+     });
+
+     function check(input_name, value) {
+         value = trimStr(value);
+
+         var  data_context = {
+             status_code : 0,
+             info:""
+         };
+
+       switch(input_name){
+                   case "task_title":{
+                       if(!value){
+                           record_info(0, "请填入任务名称");
+                       } else {
+                           if (value.length < 4 || value.length >20){
+                               record_info(0, "4-20个字符");
+                           }else {
+                            var test_rel = /[\u4e00-\u9fa5\w\s]{4,20}/g;
+                             if (test_rel.test(value)){
+                              record_info(1, "")
+                             } else {
+                              record_info(0, "任务名称不合法");
+                             }
+                           }
+                       }
+                   }break;
+
+                   case "task_contacts":{
+                       if(!value){
+                           record_info(0, "请输入联系人");
+                           console.log("输入联系人");
+                       } else {
+                           if (value.length < 4 || value.length >20){
+                               record_info(0, "4-20个字符");
+                           }else {
+                               var test_pro_rel = /[\u4e00-\u9fa5\w\s\-,，\.。\?？:;：；【】'"!！`]{4,20}/g;
+                              if (test_pro_rel.test(value)){
+                              record_info(1, "")
+                              } else {
+                              record_info(0, "联系人不合法");
+                              }
+                           }
+                       }
+
+                   }break;
+
+                   case "process_content":{
+                       if(!value){
+                           record_info(0, "请输入处理过程");
+                           console.log("输入内容");
+                       } else {
+                           if (value.length < 20 || value.length >1000){
+                               record_info(0, "20-1000个字符");
+                           }else {
+                               var test_de_rel = /[\u4e00-\u9fa5\w\s\-,，\.。\?？:;：；【】'"!！`]{20,1000}/g;
+                          if (test_de_rel.test(value)){
+                              record_info(1, "")
+                          } else {
+                              record_info(0, "处理过程不合法");
+                          }}
+                       }
+                   }break;
+                   default:{
+
+                   }
+               }
+
+       function record_info(status_code, info){
+           data_context.status_code = status_code;
+           data_context.info = info;
+       }
+
+       console.log(data_context.status_code);
+       return data_context;
+     }
+
+     // 切除两边的空格
+     function trimStr(str){
+         return str.replace(/(^\s*)|(\s*$)/g,"");
+     }
+
+    });
+ </script>
+{% endblock %}
+
+
+
+

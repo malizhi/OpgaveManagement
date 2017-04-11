@@ -1,0 +1,145 @@
+{%  extends "index.html" %}
+{% load crispy_forms_tags %}
+{% block page_css %}
+{% endblock %}
+{% block page_title %}
+    创建日报
+{% endblock %}
+
+{% block container %}
+{% load staticfiles %}
+    {% include "content_detail.html" %}
+{% endblock%}
+
+{% block page_javascript %}
+ <script type="text/javascript">
+$(function(){
+    var $daily_title = $("input[name='daily_title']");
+    var $daily_profile = $("textarea[name='daily_profile']");
+    var $daily_detail = $("textarea[name='daily_detail']");
+
+    var $main_view = $("#main_view");
+    var $window = $(window);
+
+    $main_view.css({height:$window.height() * 0.7});
+    // 重新计算高度
+        $window.resize(function(){
+            $main_view.css({height:$window.height() * 0.7});
+        });
+    // 需要验证
+    $("form").on("blur", ".text", function(){
+               var $this = $(this);
+               var input_name = $this.prop("name");
+               var $value = trimStr($this.val());
+               var info_dic = check(input_name, $value);
+               $this.prev().text(info_dic.info);
+         });
+
+     $("#submit").submit(function(){
+      var daily_title =  $daily_title.val();
+      var daily_profile = $daily_profile.val();
+      var daily_detail = $daily_detail.val();
+
+      var title_info_dic = check($daily_title.prop("name"), daily_title);
+      var profile_info_dic = check($daily_profile.prop("name"), daily_profile);
+      var detail_info_dic = check($daily_detail.prop("name"), daily_detail);
+
+      $daily_title.prev().text(title_info_dic.info);
+      $daily_profile.prev().text(profile_info_dic.info);
+      $daily_detail.prev().text(detail_info_dic.info);
+
+
+      if((title_info_dic.status_code == 1)
+          && (profile_info_dic.status_code == 1)
+          && (detail_info_dic.status_code == 1)){
+          return true;
+      }
+
+      return false;
+
+     });
+
+     function check(input_name, value) {
+         value = trimStr(value);
+
+         var  data_context = {
+             status_code : 0,
+             info:""
+         };
+
+       switch(input_name){
+                   case "daily_title":{
+                       if(!value){
+                           record_info(0, "请填入日报名称");
+                           console.log("输入名称");
+                       } else {
+                           if (value.length < 4 || value.length >20){
+                               record_info(0, "4-20个字符");
+                           }else {
+                            var test_rel = /[\u4e00-\u9fa5\w\s]{4,20}/g;
+                             if (test_rel.test(value)){
+                              record_info(1, "")
+                             } else {
+                              record_info(0, "日报名称不合法");
+                             }
+                           }
+                       }
+                   }break;
+
+                   case "daily_profile":{
+                       if(!value){
+                           record_info(0, "请输入日报简介");
+                           console.log("输入简介");
+                       } else {
+                           if (value.length < 10 || value.length >100){
+                               record_info(0, "10-100个字符");
+                           }else {
+                               var test_pro_rel = /[\u4e00-\u9fa5\w\s\-,，\.。\?？:;：；【】'"!！`]{10,100}/g;
+                              if (test_pro_rel.test(value)){
+                              record_info(1, "")
+                              } else {
+                              record_info(0, "日报简介不合法");
+                              }
+                           }
+                       }
+
+                   }break;
+
+                   case "daily_detail":{
+                       if(!value){
+                           record_info(0, "请输入日报内容");
+                           console.log("输入内容");
+                       } else {
+                           if (value.length < 20 || value.length >1000){
+                               record_info(0, "20-1000个字符");
+                           }else {
+                               var test_de_rel = /[\u4e00-\u9fa5\w\s\-,，\.。\?？:;：；【】'"!！`]{20,1000}/g;
+                          if (test_de_rel.test(value)){
+                              record_info(1, "")
+                          } else {
+                              record_info(0, "日报内容不合法");
+                          }}
+                       }
+                   }break;
+                   default:{
+
+                   }
+               }
+
+       function record_info(status_code, info){
+           data_context.status_code = status_code;
+           data_context.info = info;
+       }
+
+       console.log(data_context.status_code);
+       return data_context;
+     }
+
+     // 切除两边的空格
+     function trimStr(str){
+         return str.replace(/(^\s*)|(\s*$)/g,"");
+     }
+
+    });
+ </script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{%  extends "index.html" %}
+{% block page_css %}
+{% endblock %}
+{% block page_title %}
+    工作日报
+{% endblock %}
+
+{% block container %}
+{% load staticfiles %}
+    <div class="header">
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">全部
+        <span class="caret"></span>
+        </button>
+    <ul class="dropdown-menu" role="menu">
+        {% for user in users %}
+            <li>
+                <a href="javascript:record_user({{ user.id }})" id="user_check">{{ user.user.username }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+    </div>
+
+    <div class="btn-group col-lg-offset-1 col-sm-offset-1 col-md-offset-1">
+        <button type="button" class="btn btn-default dropdown-toggle btn-sm" data-toggle="dropdown">排序
+        <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu">
+         <li><a href="javascript:record_reverse(1)" id="not_reverse">降序</a></li>
+         <li><a href="javascript:record_reverse(0)" id="reverse">升序</a></li>
+        </ul>
+    </div>
+
+    <div class="btn-group col-lg-offset-1 col-sm-offset-1 col-md-offset-1">
+      <span class="btn btn-sm" style="">创建日期</span>
+      <input type="text" class="date-picker input-sm" data-date-format="yyyy-mm-dd" placeholder="开始日期" id="start_time">
+    </div>
+
+    <div class="btn-group">
+      <i class="fa fa-exchange"></i>
+    </div>
+
+    <div class="btn-group">
+      <input type="text" class="date-picker input-sm" data-date-format="yyyy-mm-dd" placeholder="结束日期" id="end_time">
+    </div>
+
+    <div class="btn-group col-lg-offset-1 col-sm-offset-1 col-md-offset-1">
+        <a type="button" class="btn btn-default btn-sm" id="search" href="">
+            <i class="ace-icon fa fa-search icon-on-right bigger-110"></i>
+        </a>
+    </div>
+
+    <div class="btn-group" style="float: right">
+        <div class="btn btn-default btn-sm">
+            <a href="{% url 'daily_add'%}" style="color: white; text-decoration: none">
+            <i class="ace-icon fa fa-search-plus bigger-130"></i>
+            新建日报
+        </a>
+        </div>
+    </div>
+
+    </div>
+
+    <div class="media-body">
+   <div>
+       <ul style="list-style: none;">
+               {% for daily in data %}
+                   <li style = "border-bottom: 1px solid #dddddd; position: relative;">
+                       <div class="btn-group" style="width: 100%">
+                           <a href="javascript:void(0)" style="text-decoration: none">
+                               姓名：{{ daily.daliy_create_name  }}
+                           </a>
+                           <span style="margin-left: 20px">
+                               {{ daily.daliy_date }}
+                           </span>
+                       </div>
+                       <a style="text-decoration: none" href="{% url "daily_detail" %}?daily_id={{ daily.id }}"><h3 style="margin: 10px 0">{{ daily.daliy_title }}</h3></a>
+                       <div>
+                           {{ daily.daliy_profile }}
+                       </div>
+
+                       {% if request.session.user_id == daily.daliy_user.id  %}
+                           <div class="action-buttons" style="float: right; position: absolute; top: 50%;right: 50px; margin-top: -8px;">
+                           <a href="{% url 'daily_delete' daily.id %}" class="daily_delete red">
+                               <i class="ace-icon fa fa-trash-o bigger-130"></i>
+                           </a>
+                           </div>
+                       {% else %}
+                           <div class="action-buttons" style="float: right; position: absolute; top: 50%;right: 50px; margin-top: -8px;">
+                           <a href="javascript:void(0)" class="no_daily_delete red">
+                               <i class="ace-icon fa fa-trash-o bigger-130"></i>
+                           </a>
+                           </div>
+                       {% endif %}
+
+                   </li>
+               {% endfor %}
+       </ul>
+   {% include 'pagination.html' %}
+   </div>
+    </div>
+
+{% endblock %}
+
+{% block page_javascript %}
+
+    {% include 'modal_js.html' %}
+ <script type="text/javascript">
+        $(document).ready(function(){
+    $('#table_id').DataTable({
+        "paging":false,
+        "searching": false,
+        "bInfo": false,
+        "columnDefs": [ {
+                    "orderable": false, "targets": -1
+                    } ]
+    });
+
+    $(".no_delete").click(function(){
+                    alert("您没有权限删除这日报");
+                    return false;
+    })
+    });
+ </script>
+
+
+<!--用于日期的前端显示-->
+
+ <script type="text/javascript">
+ var  user_id = {{ request.session.user_id }};
+ var is_reverse = 0;
+            jQuery(function($) {
+				//datepicker plugin
+				//link
+				$('.date-picker').datepicker({
+					autoclose: true,
+					todayHighlight: true
+				})
+				//show datepicker when clicking on the icon
+				.next().on(ace.click_event, function(){
+					$(this).prev().focus();
+				});
+
+				//or change it into a date range picker
+				$('.input-daterange').datepicker({autoclose:true});
+
+
+				$('#timepicker1').timepicker({
+					minuteStep: 1,
+					showSeconds: true,
+					showMeridian: false
+				}).next().on(ace.click_event, function(){
+					$(this).prev().focus();
+				});
+
+				$('#date-timepicker1').datetimepicker().next().on(ace.click_event, function(){
+					$(this).prev().focus();
+				});
+                var $end_input = $("#end_time");
+                $end_input.click(function(){
+                    $(this).val("").css({color:"#666666", fontSize:"14px"})
+                });
+
+				$("#search").click(function () {
+                   var start_time = $("#start_time").val();
+                   var end_time = $end_input.val();
+                   if  (start_time <= end_time){
+                       var para = {
+                           "user_id":user_id,
+                           "reverse":is_reverse
+                       };
+                       var href_url = '{% url 'daily_list'%}' + '?' +"user_id="+user_id+"&reverse="+is_reverse
+                       if (start_time){
+                          para.start_time = start_time;
+                          href_url += "&start_time="+start_time;
+                       }
+
+                       if (end_time){
+                           para.end_time = end_time;
+                           href_url += "&end_time="+end_time;
+                       }
+                       $(this).prop({href:href_url});
+                       return true;
+
+                   } else {
+                       $end_input.val("结束必须大于开始").css({color:"red", fontSize:"12px"});
+                       return false;
+                   }
+                });
+
+                $(".daily_delete").click(function () {
+                    return confirm("确定要删除此日报?");
+                });
+});
+            function record_user(user) {
+                user_id = user;
+            }
+
+            function record_reverse(reverse){
+                is_reverse = reverse
+            }
+ 
+		</script>
+{% endblock %}

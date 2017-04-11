@@ -1,0 +1,69 @@
+<div class="row" id="main_view">
+    <form style="height: 100%" action="{% url "daily_add" %}" method="post" id="submit">
+            {% csrf_token %}
+
+            {% if daily_id %}
+                  <input value="{{ daily_id }}" name="daily_id" style="display: none">
+            {% endif %}
+
+            <ul style="padding: 0; margin: 0; border: 0;list-style: none; width: 100%; height:100%">
+            <li style="float: left;border-right: 1px solid #ddd; width: 25%; height: 100%;">
+                <ul style="padding: 0; margin: 0 10px 0 0; border: 0;list-style: none;height: 100%">
+                    <li style="height:20%">
+                        <div style="width: 100%;height: 30px">
+                            日报的名称
+                        </div>
+                        <label style="color: red; margin:0;"></label>
+                        {% if daily_title  %}
+                            {% if request.session.user_id == daily_user_id  %}
+                                <input type="text" name="daily_title" placeholder="请输入日报的名称" style="width: 100%;height: 50%;" class="text" value='{{ daily_title }}'>
+                            {% else %}
+                                <input type="text" name="daily_title" placeholder="请输入日报的名称" style="width: 100%;height: 50%;" class="text" value='{{ daily_title }}' readonly/>
+                            {% endif %}
+
+                        {% else %}
+                            <input type="text" name="daily_title" placeholder="请输入日报的名称" style="width: 100%;height: 50%;" class="text">
+                        {% endif %}
+
+                    </li>
+                    <li style="height: 70%;">
+                        <div style="width: 100%;height: 30px; line-height: 30px;">
+                                摘要
+                        </div>
+                        <label style="color: red; margin:0;"></label>
+                        {% if daily_profile %}
+                            {% if request.session.user_id == daily_user_id  %}
+                                <textarea type="text" name="daily_profile" placeholder="请输入日报的摘要" style="width:100%; height: 50%;" class="text">{{ daily_profile  }}</textarea>
+                             {% else %}
+                                <textarea type="text" name="daily_profile" placeholder="请输入日报的摘要" style="width:100%; height: 50%;" class="text" readonly>{{ daily_profile  }}</textarea>
+                            {% endif %}
+                        {% else %}
+                            <textarea type="text" name="daily_profile" placeholder="请输入日报的摘要" style="width:100%; height: 50%;" class="text"></textarea>
+                        {% endif %}
+                    </li>
+                </ul>
+            </li>
+            <li style="width: 75%;float: right;box-sizing: border-box; border-left: 10px solid white; height: 100%">
+                <div class="btn-group" style="width: 100%;">
+                    <span style="line-height: 34px;">日报的内容</span>
+                    <div style="float: right">
+                        {% if request.session.user_id == daily_user_id or not daily_user_id %}
+                            <input class='btn btn-primary btn-sm' type="submit" value='提交' style="float: left; width: 50px;margin-right: 10px"/>
+                        {% endif %}
+                        <a href="{% url 'daily_list' %}" tyle="float: left"><input class='btn btn-default btn-sm' type='button' value='取消' /></a>
+                    </div>
+                </div>
+               <label style="color: red; margin:0; "></label>
+                {% if daily_detail %}
+                    {% if request.session.user_id == daily_user_id  %}
+                        <textarea type="text" name="daily_detail" placeholder="请输入日报的内容" style="width: 100%;height: 90%; margin-top: 5px;" class="text">{{ daily_detail }}</textarea>
+                     {% else %}
+                        <textarea type="text" name="daily_detail" placeholder="请输入日报的内容" style="width: 100%;height: 90%; margin-top: 5px;" class="text" readonly>{{ daily_detail }}</textarea>
+                     {% endif %}
+                {% else %}
+                    <textarea type="text" name="daily_detail" placeholder="请输入日报的内容" style="width: 100%;height: 90%; margin-top: 5px;" class="text"></textarea>
+                {% endif %}
+            </li>
+        </ul>
+        </form>
+</div>
